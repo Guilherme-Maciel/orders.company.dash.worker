@@ -7,5 +7,5 @@ public interface IOrderSummaryRepository
 {
     Task HandleOrderCreatedAsync(OrderCreatedEvent @event);
     Task HandleOrderItemAddedAsync(OrderItemAddedEvent @event);
-    Task HandleOrderSubmittedAsync(OrderSubmittedEvent @event);
+    Task HandleOrderPaidAsync(OrderPaidEvent @event);
 }

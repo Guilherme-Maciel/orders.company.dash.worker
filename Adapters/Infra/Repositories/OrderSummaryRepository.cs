@@ -24,71 +24,65 @@ public class OrderSummaryRepository : IOrderSummaryRepository
     }
     public async Task HandleOrderCreatedAsync(OrderCreatedEvent @event)
     {
-        await CreateOrReplaceOrderSummary(@event.OrderId, @event.CustomerId, async (filter) =>
-        {
-            var update = Builders<OrderSummary>.Update.Push(p => p.Status, new OrderStatus()
+        var filter = Builders<OrderSummary>.Filter
+            .Eq(p => p.OrderId, @event.OrderId);
+
+        var customerRef = await _customer.Find(p=>p.CustomerId.Equals(@event.CustomerId)).FirstOrDefaultAsync();
+
+        var update = Builders<OrderSummary>.Update
+            .Set(p => p.Customer, customerRef)
+            .Push(p => p.Status, new OrderStatus()
             {
                 Status = "Pending",
                 Timestamp = @event.Timestamp
             });
-
-            await _orderSummary.UpdateOneAsync(
-                filter,
-                update,
-                new UpdateOptions { IsUpsert = true }
-            );
-        });
-
+            
+        await _orderSummary.UpdateOneAsync(
+            filter: filter,
+            update: update,
+            options: new UpdateOptions { IsUpsert = true }
+        );
     }
 
     public async Task HandleOrderItemAddedAsync(OrderItemAddedEvent @event)
     {
-        await CreateOrReplaceOrderSummary(@event.OrderId, @event.CustomerId, async (filter) =>
+        var filter = Builders<OrderSummary>.Filter
+            .Eq(p => p.OrderId, @event.OrderId);
+
+        var product = await _product.Find(p => p.ProductId.Equals(@event.ProductId)).FirstOrDefaultAsync();
+
+        var item = new OrderItem()
         {
-            var product = await _product.Find(p => p.ProductId.Equals(@event.ProductId)).FirstAsync();
-
-            var item = new OrderItem()
-            {
-                ProductId = product.ProductId,
-                ProductName = product.ProductName,
-                Quantity = @event.Quantity,
-                Price = product.Price
-            };
-
-            var update = Builders<OrderSummary>.Update.Push(p => p.Items, item);
-
-            await _orderSummary.UpdateOneAsync(
-                filter,
-                update,
-                new UpdateOptions { IsUpsert = true }
-            );
-        });
-    }
-
-    public Task HandleOrderSubmittedAsync(OrderSubmittedEvent @event)
-    {
-        throw new NotImplementedException();
-    }
-
-    private async Task CreateOrReplaceOrderSummary(Guid orderId, Guid customerId, Func<FilterDefinition<OrderSummary>,Task> afterFunc)
-    {
-        var customerRef = await _customer.Find(p=>p.CustomerId.Equals(customerId)).FirstAsync();
-
-        var projection = new OrderSummary
-        {
-            OrderId = orderId,
-            Customer = customerRef,
+            ProductId = product.ProductId,
+            ProductName = product.ProductName,
+            Quantity = @event.Quantity,
+            Price = product.Price
         };
 
-        var filter = Builders<OrderSummary>.Filter
-            .Eq(p => p.OrderId, orderId);
+        var update = Builders<OrderSummary>.Update.Push(p => p.Items, item);
 
-        await _orderSummary.ReplaceOneAsync(
-            filter: filter,
-            replacement: projection,
-            options: new ReplaceOptions { IsUpsert = true }
+        await _orderSummary.UpdateOneAsync(
+            filter,
+            update,
+            new UpdateOptions { IsUpsert = true }
         );
+    }
 
-        await afterFunc(filter);
+    public async Task HandleOrderPaidAsync(OrderPaidEvent @event)
+    {
+        var filter = Builders<OrderSummary>.Filter
+            .Eq(p => p.OrderId, @event.OrderId);
+
+        var update = Builders<OrderSummary>.Update.Push(p => p.Status, new OrderStatus()
+        {
+            Status = "Paid",
+            Timestamp = @event.Timestamp
+        });
+
+        await _orderSummary.UpdateOneAsync(
+            filter,
+            update,
+            new UpdateOptions { IsUpsert = true }
+        );
     }
 }

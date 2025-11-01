@@ -28,14 +28,12 @@ public class Worker : BackgroundService
     {
         _channel = await _rabbitConnection.CreateChannelAsync();
 
-        // Garante que a fila existe (como no definitions.json)
         await _channel.QueueDeclareAsync(queue: _queueName,
                               durable: true,
                               exclusive: false,
                               autoDelete: false,
                               arguments: null);
 
-        // Define Quality of Service: processa 1 mensagem por vez.
         await _channel.BasicQosAsync(prefetchSize: 0, prefetchCount: 1, global: false);
 
         _logger.LogInformation("Worker pronto, aguardando mensagens na fila: {QueueName}", _queueName);
@@ -56,26 +54,20 @@ public class Worker : BackgroundService
 
             try
             {
-                // Processa a mensagem
                 await HandleMessageAsync(message);
 
-                // Confirma ao RabbitMQ que a mensagem foi processada com sucesso
                 await _channel.BasicAckAsync(ea.DeliveryTag, multiple: false);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Erro ao processar mensagem: {Message}", message);
 
-                // Rejeita a mensagem e a devolve para a fila para nova tentativa
                 await _channel.BasicNackAsync(ea.DeliveryTag, multiple: false, requeue: true);
-
-                // (Em produção, você teria uma política de "dead-letter queue" 
-                // para mensagens que falham repetidamente)
             }
         };
 
         await _channel.BasicConsumeAsync(queue: _queueName,
-                        autoAck: false, // Nós faremos o ACK manual
+                        autoAck: false,
                         consumer: consumer);
 
         await Task.CompletedTask;
@@ -102,8 +94,11 @@ public class Worker : BackgroundService
                 await _repository.HandleOrderItemAddedAsync(itemAddedEvent);
                 break;
 
-            // case "order_submitted": ...
-
+            case "order_paid":
+                var paidOrder = JsonSerializer.Deserialize<OrderPaidEvent>(message);
+                _logger.LogInformation("Processando OrderItemAddedEvent para: {OrderId}", paidOrder.OrderId);
+                await _repository.HandleOrderPaidAsync(paidOrder);
+                break;
             default:
                 _logger.LogWarning("Tipo de evento desconhecido: {EventType}", baseEvent?.EventType);
                 break;
