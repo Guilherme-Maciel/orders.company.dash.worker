@@ -1,6 +1,6 @@
 using System;
 
-namespace orders.projection.worker.Core.Ports.Repositories.Projections;
+namespace orders.company.projection.worker.Core.Projections;
 
 public class Customer
 {

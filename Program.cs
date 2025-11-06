@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Options;
-using orders.projection.worker;
-using orders.projection.worker.Adapters.Infra.Database.Options;
-using orders.projection.worker.Adapters.Infra.Messaging.Options;
-using orders.projection.worker.Adapters.Infra.Repositories;
-using orders.projection.worker.Core.Ports.Repositories;
+using orders.company.projection.worker;
+using orders.company.projection.worker.Adapters.Infra.Database.Options;
+using orders.company.projection.worker.Adapters.Infra.Messaging.Options;
+using orders.company.projection.worker.Adapters.Infra.Repositories;
+using orders.company.projection.worker.Core.Ports.Repositories;
 using RabbitMQ.Client;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -11,7 +11,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.Configure<MongoDbOptions>(builder.Configuration.GetSection("MongoDb"));
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMq"));
 
-builder.Services.AddSingleton<IOrderSummaryRepository, OrderSummaryRepository>();
+builder.Services.AddSingleton<IDashboardRepository, DashboardRepository>();
 
 builder.Services.AddSingleton(sp =>
 {

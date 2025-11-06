@@ -1,13 +1,13 @@
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
-using orders.projection.worker.Adapters.Infra.Messaging.Options;
-using orders.projection.worker.Core.Events;
-using orders.projection.worker.Core.Ports.Repositories;
+using orders.company.projection.worker.Adapters.Infra.Messaging.Options;
+using orders.company.projection.worker.Core.Events;
+using orders.company.projection.worker.Core.Ports.Repositories;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace orders.projection.worker;
+namespace orders.company.projection.worker;
 
 public class Worker : BackgroundService
 {
@@ -15,9 +15,9 @@ public class Worker : BackgroundService
     private readonly IConnection _rabbitConnection;
     private readonly string _queueName;
     private IChannel _channel;
-    private readonly IOrderSummaryRepository _repository;
+    private readonly IDashboardRepository _repository;
 
-    public Worker(ILogger<Worker> logger, IConnection rabbitConnection, IOptions<RabbitMqOptions> options, IOrderSummaryRepository repository)
+    public Worker(ILogger<Worker> logger, IConnection rabbitConnection, IOptions<RabbitMqOptions> options, IDashboardRepository repository)
     {
         _logger = logger;
         _rabbitConnection = rabbitConnection;
@@ -89,9 +89,6 @@ public class Worker : BackgroundService
                 break;
 
             case "order_item_added":
-                var itemAddedEvent = JsonSerializer.Deserialize<OrderItemAddedEvent>(message);
-                _logger.LogInformation("Processando OrderItemAddedEvent para: {OrderId}", itemAddedEvent.OrderId);
-                await _repository.HandleOrderItemAddedAsync(itemAddedEvent);
                 break;
 
             case "order_paid":

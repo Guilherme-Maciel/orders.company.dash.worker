@@ -1,6 +1,6 @@
 using System;
 
-namespace orders.projection.worker.Core.Events;
+namespace orders.company.projection.worker.Core.Events;
 
 public class OrderPaidEvent
 {

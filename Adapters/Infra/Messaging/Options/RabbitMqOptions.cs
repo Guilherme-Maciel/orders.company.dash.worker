@@ -1,6 +1,6 @@
 using System;
 
-namespace orders.projection.worker.Adapters.Infra.Messaging.Options;
+namespace orders.company.projection.worker.Adapters.Infra.Messaging.Options;
 
 public class RabbitMqOptions
 {
