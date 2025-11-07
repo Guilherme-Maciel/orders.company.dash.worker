@@ -38,7 +38,7 @@ jobs:
       - name: Push docker image
         run: |
           docker push gu1guizo/tcc.orders_companydash_worker:${{ steps.generate_sha.outputs.sha }}
-          docker tag gu1guizo/tcc.orders_companydash_worker:${{ steps.generate_sha.outputs.sha }} gu1guizo/nlw-journey.api:latest
+          docker tag gu1guizo/tcc.orders_companydash_worker:${{ steps.generate_sha.outputs.sha }} gu1guizo/tcc.orders_companydash_worker:latest
           docker push gu1guizo/tcc.orders_companydash_worker:latest
 
 
